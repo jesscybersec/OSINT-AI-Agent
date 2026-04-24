@@ -27,7 +27,7 @@
 + target classes: social / identity / company / infrastructure
 ```
 
-`OSINT AI Agent` is a Kali Linux-oriented investigation project built inside the `CyberJess-Lab` universe.
+`OSINT AI Agent` is a standalone, Kali Linux-oriented investigation project built for controlled OSINT operations.
 
 The goal is not to create a fully autonomous black box.  
 The goal is to create a step-driven OSINT workflow that stays:
@@ -181,7 +181,7 @@ This profile:
 ## QUICK LAUNCH
 
 ```bash
-cd AI-Agent/OSINT-AI-Agent
+cd OSINT-AI-Agent
 
 python run.py example.com
 python run.py cyberjess --target-type username
@@ -236,20 +236,19 @@ Setup references:
 ## FILESYSTEM MAP
 
 ```text
-AI-Agent/
-`-- OSINT-AI-Agent/
-    |-- README.md
-    |-- README_fr.md
-    |-- config/
-    |   |-- osint_sources_registry.yaml
-    |   `-- profiles/
-    |-- docs/
-    |   |-- en/
-    |   `-- fr/
-    |-- reports/
-    |-- scripts/
-    |-- src/
-    `-- templates/
+OSINT-AI-Agent/
+|-- README.md
+|-- README_fr.md
+|-- config/
+|   |-- osint_sources_registry.yaml
+|   `-- profiles/
+|-- docs/
+|   |-- en/
+|   `-- fr/
+|-- reports/
+|-- scripts/
+|-- src/
+`-- templates/
 ```
 
 Key references:
