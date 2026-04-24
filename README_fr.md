@@ -286,7 +286,21 @@ OSINT-AI-Agent/
 |   |-- en/
 |   `-- fr/
 |-- instructions/
+|   |-- agent-operating-model.md
+|   `-- reporting-standard.md
 |-- skills/
+|   |-- passive-domain-infra-osint/
+|   |   |-- SKILL.md
+|   |   |-- agents/
+|   |   `-- references/
+|   |-- evidence-first-email-osint/
+|   |   |-- SKILL.md
+|   |   |-- agents/
+|   |   `-- references/
+|   `-- canada-records-location-osint/
+|       |-- SKILL.md
+|       |-- agents/
+|       `-- references/
 |-- reports/
 |-- sample_reports/
 |-- scripts/
