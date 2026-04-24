@@ -32,6 +32,7 @@ PIVOT_TYPES = {
     "registry_search_url",
 }
 HUB_TYPES = {"resource_hub"}
+INFRA_TARGET_TYPES = {"domain", "subdomain", "hostname", "url", "ip", "cidr", "asn"}
 
 
 def _is_url(value: str) -> bool:
@@ -222,6 +223,66 @@ def _render_pivot_table(title: str, observables: list[Observable]) -> list[str]:
     return lines
 
 
+def _render_domain_asset_summary(observables: list[Observable]) -> list[str]:
+    lines = ["## Infrastructure Exposure Snapshot", ""]
+    domain_values = sorted({observable.value for observable in observables if observable.type == "domain"})
+    ip_values = sorted({observable.value for observable in observables if observable.type == "ip"})
+    url_values = sorted({observable.value for observable in observables if observable.type == "url"})
+
+    lines.append(f"- Domains observed: {len(domain_values)}")
+    lines.append(f"- IP addresses observed: {len(ip_values)}")
+    lines.append(f"- URLs observed: {len(url_values)}")
+    lines.append("")
+
+    if domain_values:
+        lines.append("Observed domains:")
+        lines.append("")
+        for value in domain_values[:15]:
+            lines.append(f"- `{value}`")
+        lines.append("")
+
+    if ip_values:
+        lines.append("Observed IP addresses:")
+        lines.append("")
+        for value in ip_values[:15]:
+            lines.append(f"- `{value}`")
+        lines.append("")
+
+    if url_values:
+        lines.append("Observed URLs:")
+        lines.append("")
+        for value in url_values[:10]:
+            lines.append(f"- `{value}`")
+        lines.append("")
+
+    if not domain_values and not ip_values and not url_values:
+        lines.extend(["No infrastructure assets were confirmed during this run.", ""])
+
+    return lines
+
+
+def _filter_pivots_by_source(observables: list[Observable], sources: set[str]) -> list[Observable]:
+    return [observable for observable in observables if observable.source in sources]
+
+
+def _render_domain_pivot_sections(pivots: list[Observable]) -> list[str]:
+    dns_pivots = _filter_pivots_by_source(pivots, {"crtsh_lookup"})
+    passive_web_pivots = _filter_pivots_by_source(pivots, {"urlscan_search"})
+    code_pivots = _filter_pivots_by_source(pivots, {"github_code_search"})
+    archive_pivots = _filter_pivots_by_source(pivots, {"wayback_search"})
+    used_ids = {"crtsh_lookup", "urlscan_search", "github_code_search", "wayback_search"}
+    remaining = [observable for observable in pivots if observable.source not in used_ids]
+
+    lines: list[str] = []
+    lines.extend(_render_pivot_table("## DNS and Certificate Pivots", dns_pivots))
+    lines.extend(_render_pivot_table("## Passive Web Exposure Pivots", passive_web_pivots))
+    lines.extend(_render_pivot_table("## Code and Repository Pivots", code_pivots))
+    lines.extend(_render_pivot_table("## Archive and Historical Pivots", archive_pivots))
+    if remaining:
+        lines.extend(_render_pivot_table("## Additional Investigation Pivots", remaining))
+    return lines
+
+
 def _status_label(status: str) -> str:
     return {
         "completed": "Completed",
@@ -317,8 +378,13 @@ def render_markdown_report(report: ReportData, template_dir: Path, output_path: 
     lines.extend(_render_observable_table("## Confirmed Evidence", evidence))
     lines.extend(_render_observable_table("## Collector Notes", tool_results))
     lines.extend(_render_observable_table("## Leads Requiring Validation", derived))
+    if report.target_type in INFRA_TARGET_TYPES:
+        lines.extend(_render_domain_asset_summary(evidence + other))
     lines.extend(_render_priority_actions(report, report.collector_runs, pivots))
-    lines.extend(_render_pivot_table("## Suggested Pivots", pivots))
+    if report.target_type in INFRA_TARGET_TYPES:
+        lines.extend(_render_domain_pivot_sections(pivots))
+    else:
+        lines.extend(_render_pivot_table("## Suggested Pivots", pivots))
     lines.extend(_render_pivot_table("## Reference Hubs", hubs))
     if other:
         lines.extend(_render_observable_table("## Supporting Observables", other))

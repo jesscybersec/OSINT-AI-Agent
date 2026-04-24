@@ -105,6 +105,7 @@ def _max_coverage_pivots(target: Target) -> list[Observable]:
                 ("crtsh_lookup", f"https://crt.sh/?q={query}"),
                 ("urlscan_search", f"https://urlscan.io/search/#domain:{query}"),
                 ("github_code_search", f"https://github.com/search?q={query}&type=code"),
+                ("wayback_search", f"https://web.archive.org/web/*/{query}"),
             ]
         )
 
