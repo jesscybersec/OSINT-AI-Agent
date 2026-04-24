@@ -219,6 +219,15 @@ chmod +x ./scripts/install_kali_tools.sh
 sh ./scripts/install_kali_tools.sh
 ```
 
+Post-install verification:
+
+```bash
+amass enum -h
+bbot --help
+theHarvester -h
+python run.py example.com --target-type domain --profile max_coverage
+```
+
 Recommended install baseline:
 
 ```bash
