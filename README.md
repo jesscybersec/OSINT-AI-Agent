@@ -310,10 +310,6 @@ OSINT-AI-Agent/
 
 Key references:
 
-- [English Project Overview](./docs/en/PROJECT_OVERVIEW.md)
-- [English Architecture](./docs/en/ARCHITECTURE.md)
-- [English Max Coverage Strategy](./docs/en/MAX_COVERAGE_STRATEGY.md)
-- [English Canada Localization](./docs/en/CANADA_LOCALIZATION.md)
 - [Project Overview](./docs/en/PROJECT_OVERVIEW.md)
 - [Architecture](./docs/en/ARCHITECTURE.md)
 - [Max Coverage Strategy](./docs/en/MAX_COVERAGE_STRATEGY.md)
