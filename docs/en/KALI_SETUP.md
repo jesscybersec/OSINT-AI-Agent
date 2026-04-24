@@ -17,6 +17,21 @@ This setup is intended to maximize OSINT coverage while keeping the project audi
 
 ## Suggested Install Flow
 
+Repository-based setup:
+
+```bash
+git clone https://github.com/jesscybersec/OSINT-AI-Agent.git
+cd OSINT-AI-Agent
+chmod +x ./scripts/install_kali_tools.sh
+sh ./scripts/install_kali_tools.sh
+```
+
+Installer script reference:
+
+- [`scripts/install_kali_tools.sh`](../../scripts/install_kali_tools.sh)
+
+Manual package flow:
+
 ```bash
 sudo apt update
 sudo apt install -y pipx jq curl git python3-venv amass theharvester

@@ -210,6 +210,15 @@ reports/
 + fallback behavior when tools are missing: safe
 ```
 
+Quick installer flow:
+
+```bash
+git clone https://github.com/jesscybersec/OSINT-AI-Agent.git
+cd OSINT-AI-Agent
+chmod +x ./scripts/install_kali_tools.sh
+sh ./scripts/install_kali_tools.sh
+```
+
 Recommended install baseline:
 
 ```bash
@@ -230,6 +239,7 @@ Setup references:
 
 - [Kali Setup (English)](./docs/en/KALI_SETUP.md)
 - [Kali Setup (French)](./docs/fr/KALI_SETUP.md)
+- [Kali installer script](./scripts/install_kali_tools.sh)
 
 ---
 

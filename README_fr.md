@@ -210,6 +210,15 @@ reports/
 + comportement de repli si outils absents: safe
 ```
 
+Flux d'installation rapide:
+
+```bash
+git clone https://github.com/jesscybersec/OSINT-AI-Agent.git
+cd OSINT-AI-Agent
+chmod +x ./scripts/install_kali_tools.sh
+sh ./scripts/install_kali_tools.sh
+```
+
 Base d'installation recommandee:
 
 ```bash
@@ -230,6 +239,7 @@ References de configuration:
 
 - [Guide Kali en anglais](./docs/en/KALI_SETUP.md)
 - [Guide Kali en francais](./docs/fr/KALI_SETUP.md)
+- [Script d'installation Kali](./scripts/install_kali_tools.sh)
 
 ---
 

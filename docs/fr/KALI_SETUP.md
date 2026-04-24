@@ -17,6 +17,21 @@ Cette configuration vise a maximiser la couverture OSINT tout en gardant un work
 
 ## Installation suggeree
 
+Installation a partir du depot:
+
+```bash
+git clone https://github.com/jesscybersec/OSINT-AI-Agent.git
+cd OSINT-AI-Agent
+chmod +x ./scripts/install_kali_tools.sh
+sh ./scripts/install_kali_tools.sh
+```
+
+Reference du script d'installation:
+
+- [`scripts/install_kali_tools.sh`](../../scripts/install_kali_tools.sh)
+
+Installation manuelle des paquets:
+
 ```bash
 sudo apt update
 sudo apt install -y pipx jq curl git python3-venv amass theharvester
