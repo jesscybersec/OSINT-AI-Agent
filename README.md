@@ -286,6 +286,7 @@ OSINT-AI-Agent/
 |   |-- en/
 |   `-- fr/
 |-- reports/
+|-- sample_reports/
 |-- scripts/
 |-- src/
 `-- templates/
@@ -297,6 +298,7 @@ Key references:
 - [English Architecture](./docs/en/ARCHITECTURE.md)
 - [English Max Coverage Strategy](./docs/en/MAX_COVERAGE_STRATEGY.md)
 - [English Canada Localization](./docs/en/CANADA_LOCALIZATION.md)
+- [Public sample reports](./sample_reports/README.md)
 
 ---
 
