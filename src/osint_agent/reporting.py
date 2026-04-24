@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from osint_agent.models import Finding, Observable, ReportData
+from osint_agent.models import CollectorRun, Finding, Observable, ReportData
 
 
 EVIDENCE_TYPES = {
@@ -71,47 +71,56 @@ def _split_observables(
     return evidence, derived, tool_results, pivots, hubs, other
 
 
-def _build_analyst_highlights(
+def _build_key_findings(
     report: ReportData,
     evidence: list[Observable],
     derived: list[Observable],
     tool_results: list[Observable],
-    pivots: list[Observable],
+    collector_runs: list[CollectorRun],
 ) -> list[str]:
-    highlights: list[str] = []
+    findings: list[str] = []
 
     breach_counts = [observable.value for observable in tool_results if observable.type == "breach_count"]
     if breach_counts:
         count_values = ", ".join(breach_counts)
         if any(value != "0" for value in breach_counts):
-            highlights.append(f"Breach-related enrichment returned count values: {count_values}.")
+            findings.append(f"Breach-related enrichment returned count values: {count_values}.")
         else:
-            highlights.append("h8mail did not report breach hits for this email in the current run.")
+            findings.append("h8mail did not report breach hits for this email in the current run.")
 
     collector_statuses = [observable.value for observable in tool_results if observable.type == "collector_status"]
     if collector_statuses:
-        highlights.append(f"Collector execution notes: {'; '.join(collector_statuses[:3])}.")
+        findings.append(f"Collector execution notes: {'; '.join(collector_statuses[:3])}.")
 
     social_hits = [observable for observable in evidence if observable.type in {"social_profile", "email_usage"}]
     if social_hits:
-        highlights.append(f"Direct social or account-usage signals collected: {len(social_hits)}.")
+        findings.append(f"Direct social or account-usage signals collected: {len(social_hits)}.")
     elif report.target and "@" in report.target:
-        highlights.append("No direct social or account-usage hits were confirmed for the email in this run.")
+        findings.append("No direct social or account-usage hits were confirmed for the email in this run.")
 
     candidate_usernames = [observable.value for observable in derived if observable.type == "candidate_username"]
     if candidate_usernames:
-        highlights.append(f"Derived candidate usernames: {', '.join(candidate_usernames[:5])}.")
+        findings.append(f"Derived candidate usernames: {', '.join(candidate_usernames[:5])}.")
 
-    if not evidence:
-        if pivots or derived:
-            highlights.append("No direct evidence was collected for the target; the current output is mostly derived pivots and suggested next searches.")
-        else:
-            highlights.append("No direct evidence or useful pivots were collected for the target.")
+    successful_collectors = [run for run in collector_runs if run.status == "completed" and run.observable_count > 0]
+    timeout_collectors = [run for run in collector_runs if run.status == "timeout"]
+    if successful_collectors:
+        findings.append(
+            "Collectors with usable output: "
+            + ", ".join(f"{run.collector} ({run.observable_count})" for run in successful_collectors[:5])
+            + "."
+        )
 
-    if not highlights:
-        highlights.append("Collected evidence exists, but it should still be manually validated before any conclusion is drawn.")
+    if timeout_collectors:
+        findings.append("Collector timeouts affected coverage: " + ", ".join(run.collector for run in timeout_collectors) + ".")
 
-    return highlights
+    if not evidence and not successful_collectors:
+        findings.append("No direct evidence was confirmed by the current collector set; the run mostly produced pivots, references, or execution notes.")
+
+    if not findings:
+        findings.append("Collected evidence exists, but it should still be manually validated before any conclusion is drawn.")
+
+    return findings
 
 
 def _render_finding_lines(findings: list[Finding]) -> list[str]:
@@ -213,27 +222,86 @@ def _render_pivot_table(title: str, observables: list[Observable]) -> list[str]:
     return lines
 
 
+def _status_label(status: str) -> str:
+    return {
+        "completed": "Completed",
+        "timeout": "Timed out",
+        "missing": "Missing",
+        "skipped": "Skipped",
+    }.get(status, status.title())
+
+
+def _build_scope_lines(report: ReportData) -> list[str]:
+    return [
+        "## Scope",
+        "",
+        f"- Investigation target: `{report.target}`",
+        f"- Target type: `{report.target_type}`",
+        f"- Profile: `{report.profile}`",
+        f"- Collection mode: `{report.mode}`",
+        "",
+        "## Methodology",
+        "",
+        "This report separates confirmed output, collector execution status, derived leads, and follow-up pivots.",
+        "It is meant to show what was searched, what returned evidence, what failed, and what should be reviewed next.",
+        "",
+    ]
+
+
+def _render_collector_summary(collector_runs: list[CollectorRun]) -> list[str]:
+    lines = ["## Collector Execution Summary", ""]
+    if not collector_runs:
+        lines.extend(["No collectors were executed for this target/profile combination.", ""])
+        return lines
+
+    lines.extend(["| Collector | Query Used | Status | Results | Note |", "|---|---|---|---:|---|"])
+    for run in collector_runs:
+        lines.append(
+            f"| `{run.collector}` | `{run.query}` | {_status_label(run.status)} | {run.observable_count} | {run.note or ''} |"
+        )
+    lines.append("")
+    return lines
+
+
+def _render_priority_actions(report: ReportData, collector_runs: list[CollectorRun], pivots: list[Observable]) -> list[str]:
+    lines = ["## Recommended Next Steps", ""]
+    actions: list[str] = []
+
+    if any(run.status == "timeout" for run in collector_runs):
+        actions.append("Re-run the timed-out collectors individually or tune their sources before concluding that the target has low public exposure.")
+
+    if report.target_type in {"domain", "subdomain", "hostname", "url"}:
+        actions.append("Review certificate-transparency, passive scan, and archived-web pivots before escalating to active checks.")
+
+    if report.target_type in {"email", "username", "alias", "social_handle", "profile_url", "person_name", "phone"}:
+        actions.append("Treat derived identity clues as leads only until they are manually confirmed by source review.")
+
+    if pivots:
+        actions.append("Open the suggested pivots starting with the most target-specific sources rather than generic references.")
+
+    if not actions:
+        actions.append("Review the collector summary and validate all findings manually before redistribution.")
+
+    for action in actions:
+        lines.append(f"- {action}")
+    lines.append("")
+    return lines
+
+
 def render_markdown_report(report: ReportData, template_dir: Path, output_path: Path) -> Path:
     _ = template_dir
     evidence, derived, tool_results, pivots, hubs, other = _split_observables(report.observables)
-    highlights = _build_analyst_highlights(report, evidence, derived, tool_results, pivots)
+    highlights = _build_key_findings(report, evidence, derived, tool_results, report.collector_runs)
 
     lines: list[str] = [
-        "# OSINT Report",
+        "# OSINT Investigation Report",
         "",
         "## Executive Summary",
         "",
-        f"- Target: {report.target}",
-        f"- Profile: {report.profile}",
-        f"- Generated at: {report.generated_at.isoformat()}",
-        f"- Mode: {report.mode}",
-        f"- Workflow findings: {len(report.findings)}",
-        f"- Direct evidence items: {len(evidence)}",
-        f"- Tool results: {len(tool_results)}",
-        f"- Derived clues: {len(derived)}",
-        f"- Suggested pivots: {len(pivots)}",
+        f"This run assessed `{report.target}` as a `{report.target_type}` target using the `{report.profile}` profile in `{report.mode}` mode.",
+        f"Generated at `{report.generated_at.isoformat()}`.",
         "",
-        "## Analyst Highlights",
+        "## Key Findings",
         "",
     ]
 
@@ -241,22 +309,25 @@ def render_markdown_report(report: ReportData, template_dir: Path, output_path: 
         lines.append(f"- {highlight}")
     lines.append("")
 
-    lines.extend(["## Workflow Findings", ""])
+    lines.extend(_build_scope_lines(report))
+    lines.extend(["## Analytical Findings", ""])
     lines.extend(_render_finding_lines(report.findings))
 
-    lines.extend(_render_observable_table("## Direct Evidence", evidence))
-    lines.extend(_render_observable_table("## Tool Results", tool_results))
-    lines.extend(_render_observable_table("## Derived Clues", derived))
+    lines.extend(_render_collector_summary(report.collector_runs))
+    lines.extend(_render_observable_table("## Confirmed Evidence", evidence))
+    lines.extend(_render_observable_table("## Collector Notes", tool_results))
+    lines.extend(_render_observable_table("## Leads Requiring Validation", derived))
+    lines.extend(_render_priority_actions(report, report.collector_runs, pivots))
     lines.extend(_render_pivot_table("## Suggested Pivots", pivots))
     lines.extend(_render_pivot_table("## Reference Hubs", hubs))
     if other:
-        lines.extend(_render_observable_table("## Other Observables", other))
+        lines.extend(_render_observable_table("## Supporting Observables", other))
 
     lines.extend(
         [
-            "## Notes",
+            "## Analyst Note",
             "",
-            "This report is generated from a controlled OSINT pipeline and should be reviewed by an analyst before redistribution.",
+            "This document is a controlled OSINT working report. Confirm every material claim against the source or raw collector output before sharing it outside the investigation context.",
             "",
         ]
     )

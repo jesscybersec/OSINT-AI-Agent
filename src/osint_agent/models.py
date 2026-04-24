@@ -57,10 +57,22 @@ class Finding:
 
 
 @dataclass(slots=True)
+class CollectorRun:
+    collector: str
+    query: str
+    status: Literal["completed", "timeout", "missing", "skipped"]
+    observable_count: int = 0
+    timeout_seconds: int | None = None
+    note: str | None = None
+
+
+@dataclass(slots=True)
 class ReportData:
     target: str
     mode: str
+    target_type: TargetType = "domain"
     profile: str = "default"
     generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     findings: list[Finding] = field(default_factory=list)
     observables: list[Observable] = field(default_factory=list)
+    collector_runs: list[CollectorRun] = field(default_factory=list)

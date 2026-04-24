@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
-from osint_agent.models import Finding, Observable, ReportData, Target
+from osint_agent.models import CollectorRun, Finding, Observable, ReportData, Target
 from osint_agent.profiles import InvestigationProfile, get_profile, profile_reference_observables
 from osint_agent.settings import Settings
 from osint_agent.tools import amass, bbot, company_registry, identity, social, spiderfoot, theharvester
@@ -25,17 +25,39 @@ class Pipeline:
         if self.settings.show_progress:
             print(message, flush=True)
 
-    def _run_collector(self, label: str, runner, target: Target) -> list[Observable]:
+    def _resolve_collector_query(self, label: str, target: Target) -> str:
+        if label in {"amass", "bbot", "theHarvester", "spiderfoot"}:
+            return derive_infra_query(target.type, target.value)[0]
+        return target.value
+
+    def _run_collector(self, label: str, runner, target: Target) -> tuple[list[Observable], CollectorRun]:
         timeout = self.collector_timeouts.get(label)
         timeout_note = f" (timeout: {timeout}s)" if timeout else ""
         self._progress(f"[+] Running {label} for {target.type}: {target.value}{timeout_note}")
+        query = self._resolve_collector_query(label, target)
         observables = runner(target, self.settings)
         self._progress(f"[+] {label} completed with {len(observables)} observable(s)")
-        return observables
+        status = "completed"
+        note = None
+        if any(observable.type == "collector_status" and "timed out" in observable.value for observable in observables):
+            status = "timeout"
+            note = next(observable.value for observable in observables if observable.type == "collector_status")
+        elif not observables:
+            note = "No observable output returned for the current query."
+
+        return observables, CollectorRun(
+            collector=label,
+            query=query,
+            status=status,
+            observable_count=len([observable for observable in observables if observable.type != "collector_status"]),
+            timeout_seconds=timeout,
+            note=note,
+        )
 
     def run(self, target: Target, profile_id: str = "default") -> ReportData:
         profile = get_profile(profile_id)
         observables: list[Observable] = []
+        collector_runs: list[CollectorRun] = []
         self._progress(f"[+] Starting pipeline for target '{target.value}' ({target.type}) with profile '{profile.profile_id}'")
 
         enabled = set(profile.force_enable)
@@ -51,19 +73,33 @@ class Pipeline:
             self._progress(f"[+] Infrastructure query normalized to '{normalized_infra_query}'")
 
         if (self.settings.enable_amass or "amass" in enabled) and target.type in domain_like_targets:
-            observables.extend(self._run_collector("amass", amass.run, target))
+            collector_observables, collector_run = self._run_collector("amass", amass.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         if (self.settings.enable_bbot or "bbot" in enabled) and target.type in infrastructure_targets:
-            observables.extend(self._run_collector("bbot", bbot.run, target))
+            collector_observables, collector_run = self._run_collector("bbot", bbot.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         if (self.settings.enable_theharvester or "theharvester" in enabled) and target.type in {"domain", "subdomain", "hostname", "organization", "company", "url"}:
-            observables.extend(self._run_collector("theHarvester", theharvester.run, target))
+            collector_observables, collector_run = self._run_collector("theHarvester", theharvester.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         if (self.settings.enable_spiderfoot or "spiderfoot" in enabled) and target.type in infrastructure_targets | {"email", "username", "alias", "social_handle", "profile_url", "person_name", "phone", "location", "document"}:
-            observables.extend(self._run_collector("spiderfoot", spiderfoot.run, target))
+            collector_observables, collector_run = self._run_collector("spiderfoot", spiderfoot.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         if (self.settings.enable_social or "social" in enabled) and target.type in social_targets:
-            observables.extend(self._run_collector("social", social.run, target))
+            collector_observables, collector_run = self._run_collector("social", social.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         if (self.settings.enable_identity or "identity" in enabled) and target.type in identity_targets:
-            observables.extend(self._run_collector("identity", identity.run, target))
+            collector_observables, collector_run = self._run_collector("identity", identity.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         if (self.settings.enable_company_registry or "company_registry" in enabled) and target.type in company_targets:
-            observables.extend(self._run_collector("company_registry", company_registry.run, target))
+            collector_observables, collector_run = self._run_collector("company_registry", company_registry.run, target)
+            observables.extend(collector_observables)
+            collector_runs.append(collector_run)
         profile_observables = profile_reference_observables(target, profile)
         observables.extend(profile_observables)
         self._progress(f"[+] Added {len(profile_observables)} profile pivot/reference observable(s)")
@@ -73,10 +109,12 @@ class Pipeline:
         findings = self._build_findings(target, deduped, profile)
         return ReportData(
             target=target.value,
+            target_type=target.type,
             mode="passive" if target.passive_only else self.settings.default_mode,
             profile=profile.profile_id,
             findings=findings,
             observables=deduped,
+            collector_runs=collector_runs,
         )
 
     def _dedupe_observables(self, observables: list[Observable]) -> list[Observable]:
