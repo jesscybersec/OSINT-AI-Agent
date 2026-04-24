@@ -94,6 +94,19 @@ Il vise a correler des signaux open source provenant de:
 - exposition technique et surface d'attaque
 - pivots regionaux et axes Canada
 
+### Routage des target_type
+
+| Target type | Collecteurs principaux | Pivots attendus |
+|---|---|---|
+| `username` / `alias` / `social_handle` | `socialscan`, `maigret`, recherche publique | profils sociaux, variantes username, hits plateforme |
+| `profile_url` | recherche publique, `spiderfoot` | references de profil, pivots archive, URLs liees |
+| `person_name` / `email` / `phone` | `identity`, `social`, `h8mail`, `phoneinfoga` | mentions publiques, artefacts de breach, pivots personne |
+| `company` / `organization` | `company_registry`, `social`, `amass`, `bbot` | registres, presence sociale, domaines associes |
+| `domain` / `subdomain` / `hostname` | `amass`, `bbot`, `theHarvester`, `spiderfoot` | sous-domaines, emails, signaux infra passifs |
+| `url` / `ip` / `cidr` / `asn` | `bbot`, `theHarvester`, `spiderfoot` | pivots infrastructure, references code/recherche, pivots archive |
+| `location` | recherche publique, pivots profil Canada | cartes, recherche geolocalisee, registres locaux |
+| `document` | recherche publique, `spiderfoot` | pivots fichier, references archive, mentions associees |
+
 ---
 
 ## MODELE OPERATEUR
