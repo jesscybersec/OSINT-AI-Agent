@@ -67,6 +67,9 @@ It is not meant to replace analyst judgment.
 This agent is designed to support investigations involving:
 
 - `username`
+- `alias`
+- `social_handle`
+- `profile_url`
 - `person_name`
 - `email`
 - `phone`
@@ -74,7 +77,13 @@ This agent is designed to support investigations involving:
 - `organization`
 - `domain`
 - `subdomain`
+- `hostname`
+- `url`
 - `ip`
+- `cidr`
+- `asn`
+- `location`
+- `document`
 
 It is meant to correlate open-source signals across:
 

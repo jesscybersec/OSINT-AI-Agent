@@ -18,19 +18,25 @@ class Pipeline:
 
         enabled = set(profile.force_enable)
 
-        if (self.settings.enable_amass or "amass" in enabled) and target.type in {"domain", "subdomain", "organization", "company"}:
+        infrastructure_targets = {"domain", "subdomain", "hostname", "ip", "cidr", "asn", "organization", "company", "url"}
+        domain_like_targets = {"domain", "subdomain", "hostname", "organization", "company"}
+        social_targets = {"username", "alias", "social_handle", "profile_url", "person_name", "organization", "company", "email", "location"}
+        identity_targets = {"person_name", "email", "phone", "alias", "location", "document"}
+        company_targets = {"company", "organization", "person_name", "location"}
+
+        if (self.settings.enable_amass or "amass" in enabled) and target.type in domain_like_targets:
             observables.extend(amass.run(target, self.settings))
-        if (self.settings.enable_bbot or "bbot" in enabled) and target.type in {"domain", "subdomain", "ip", "organization", "company"}:
+        if (self.settings.enable_bbot or "bbot" in enabled) and target.type in infrastructure_targets:
             observables.extend(bbot.run(target, self.settings))
-        if (self.settings.enable_theharvester or "theharvester" in enabled) and target.type in {"domain", "organization", "company", "email"}:
+        if (self.settings.enable_theharvester or "theharvester" in enabled) and target.type in {"domain", "subdomain", "hostname", "organization", "company", "email", "url"}:
             observables.extend(theharvester.run(target, self.settings))
-        if (self.settings.enable_spiderfoot or "spiderfoot" in enabled) and target.type in {"domain", "organization", "company", "email", "username", "person_name", "phone"}:
+        if (self.settings.enable_spiderfoot or "spiderfoot" in enabled) and target.type in infrastructure_targets | {"email", "username", "alias", "social_handle", "profile_url", "person_name", "phone", "location", "document"}:
             observables.extend(spiderfoot.run(target, self.settings))
-        if (self.settings.enable_social or "social" in enabled) and target.type in {"username", "person_name", "organization", "company", "email"}:
+        if (self.settings.enable_social or "social" in enabled) and target.type in social_targets:
             observables.extend(social.run(target, self.settings))
-        if (self.settings.enable_identity or "identity" in enabled) and target.type in {"person_name", "email", "phone"}:
+        if (self.settings.enable_identity or "identity" in enabled) and target.type in identity_targets:
             observables.extend(identity.run(target, self.settings))
-        if (self.settings.enable_company_registry or "company_registry" in enabled) and target.type in {"company", "organization", "person_name"}:
+        if (self.settings.enable_company_registry or "company_registry" in enabled) and target.type in company_targets:
             observables.extend(company_registry.run(target, self.settings))
         observables.extend(profile_reference_observables(target, profile))
 
@@ -85,11 +91,22 @@ class Pipeline:
                 )
             )
 
-        if target.type in {"username", "email", "phone", "person_name"}:
+        if target.type in {"username", "alias", "social_handle", "profile_url", "email", "phone", "person_name", "location", "document"}:
             findings.append(
                 Finding(
                     title="OSINT identity pivot workflow enabled",
                     description="Identity-oriented target types trigger public search pivots and, when installed, Kali-friendly tools such as socialscan, maigret, phoneinfoga, and h8mail.",
+                    severity="info",
+                    source="pipeline",
+                    confidence=0.86,
+                )
+            )
+
+        if target.type in {"domain", "subdomain", "hostname", "url", "ip", "cidr", "asn"}:
+            findings.append(
+                Finding(
+                    title="Infrastructure pivot workflow enabled",
+                    description="Infrastructure-oriented target types trigger passive attack-surface pivots and, when installed, collectors such as amass, bbot, theHarvester, and SpiderFoot.",
                     severity="info",
                     source="pipeline",
                     confidence=0.86,

@@ -11,7 +11,7 @@ def _build_public_search_observables(target: Target) -> list[Observable]:
     query = quote_plus(target.value)
     searches: list[tuple[str, str]] = []
 
-    if target.type == "username":
+    if target.type in {"username", "alias", "social_handle"}:
         searches.extend(
             [
                 ("github_search", f"https://github.com/search?q={query}&type=users"),
@@ -23,12 +23,19 @@ def _build_public_search_observables(target: Target) -> list[Observable]:
                 ("gitlab_search", f"https://gitlab.com/search?search={query}&group_id=&project_id=&repository_ref=&scope=users"),
             ]
         )
-    elif target.type in {"person_name", "organization", "company"}:
+    elif target.type in {"person_name", "organization", "company", "location"}:
         searches.extend(
             [
                 ("google_general", f"https://www.google.com/search?q=%22{query}%22"),
                 ("google_social", f"https://www.google.com/search?q=site%3Alinkedin.com+OR+site%3Ax.com+OR+site%3Areddit.com+%22{query}%22"),
                 ("github_search", f"https://github.com/search?q={query}&type=users"),
+            ]
+        )
+    elif target.type == "profile_url":
+        searches.extend(
+            [
+                ("profile_reference", target.value),
+                ("wayback_profile", f"https://web.archive.org/web/*/{query}"),
             ]
         )
 
@@ -45,7 +52,7 @@ def _build_public_search_observables(target: Target) -> list[Observable]:
 
 
 def _run_socialscan(target: Target, settings: Settings) -> list[Observable]:
-    if target.type not in {"username", "email"}:
+    if target.type not in {"username", "alias", "social_handle", "email"}:
         return []
 
     json_path = settings.data_dir / "raw" / "socialscan" / f"{target.value.replace('/', '_')}.json"
@@ -63,7 +70,7 @@ def _run_socialscan(target: Target, settings: Settings) -> list[Observable]:
         return []
 
     observables: list[Observable] = []
-    observable_type = "social_profile" if target.type == "username" else "email_usage"
+    observable_type = "social_profile" if target.type in {"username", "alias", "social_handle"} else "email_usage"
     for item in parsed:
         if not isinstance(item, dict):
             continue
@@ -81,14 +88,14 @@ def _run_socialscan(target: Target, settings: Settings) -> list[Observable]:
                 value=f"{platform}: {url}",
                 source="socialscan",
                 confidence=0.85,
-                tags=["username" if target.type == "username" else "email", platform.lower()],
+                tags=["social" if target.type in {"username", "alias", "social_handle"} else "email", platform.lower()],
             )
         )
     return observables
 
 
 def _run_maigret(target: Target, settings: Settings) -> list[Observable]:
-    if target.type != "username":
+    if target.type not in {"username", "alias", "social_handle"}:
         return []
 
     result = run_command([settings.maigret_binary, target.value, "--json", "ndjson"], timeout=300)

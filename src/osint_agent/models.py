@@ -8,13 +8,22 @@ from typing import Literal
 TargetType = Literal[
     "domain",
     "subdomain",
+    "hostname",
+    "url",
     "ip",
+    "cidr",
+    "asn",
     "organization",
     "company",
     "email",
     "username",
+    "alias",
+    "social_handle",
+    "profile_url",
     "person_name",
     "phone",
+    "location",
+    "document",
 ]
 Severity = Literal["info", "low", "medium", "high"]
 

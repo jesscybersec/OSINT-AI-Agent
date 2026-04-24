@@ -92,6 +92,44 @@ def _person_name_search_urls(name: str) -> list[Observable]:
     ]
 
 
+def _location_search_urls(location_value: str) -> list[Observable]:
+    query = quote_plus(location_value)
+    urls = [
+        ("google_location_general", f"https://www.google.com/search?q=%22{query}%22"),
+        ("google_maps_location", f"https://www.google.com/maps/search/?api=1&query={query}"),
+        ("openstreetmap_location", f"https://www.openstreetmap.org/search?query={query}"),
+    ]
+    return [
+        Observable(
+            type="search_url",
+            value=url,
+            source=source,
+            confidence=0.45,
+            tags=["location", "public-search"],
+        )
+        for source, url in urls
+    ]
+
+
+def _document_search_urls(document_value: str) -> list[Observable]:
+    query = quote_plus(document_value)
+    urls = [
+        ("google_document_general", f"https://www.google.com/search?q=%22{query}%22"),
+        ("google_document_files", f"https://www.google.com/search?q=%22{query}%22+%28filetype%3Apdf+OR+filetype%3Adocx+OR+filetype%3Axlsx%29"),
+        ("google_document_github", f"https://www.google.com/search?q=site%3Agithub.com+%22{query}%22"),
+    ]
+    return [
+        Observable(
+            type="search_url",
+            value=url,
+            source=source,
+            confidence=0.4,
+            tags=["document", "public-search"],
+        )
+        for source, url in urls
+    ]
+
+
 def _email_search_urls(email_value: str) -> list[Observable]:
     query = quote_plus(email_value)
     local_part = email_value.split("@", 1)[0]
@@ -201,6 +239,12 @@ def run(target: Target, settings: Settings) -> list[Observable]:
 
     if target.type == "person_name":
         observables.extend(_person_name_search_urls(target.value))
+
+    if target.type == "location":
+        observables.extend(_location_search_urls(target.value))
+
+    if target.type == "document":
+        observables.extend(_document_search_urls(target.value))
 
     if target.type == "email":
         observables.extend(_email_search_urls(target.value))

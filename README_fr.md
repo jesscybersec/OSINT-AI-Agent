@@ -67,6 +67,9 @@ Elle ne remplace pas la validation de l'analyste.
 Cet agent est concu pour soutenir des investigations portant sur:
 
 - `username`
+- `alias`
+- `social_handle`
+- `profile_url`
 - `person_name`
 - `email`
 - `phone`
@@ -75,6 +78,12 @@ Cet agent est concu pour soutenir des investigations portant sur:
 - `domain`
 - `subdomain`
 - `ip`
+- `hostname`
+- `url`
+- `cidr`
+- `asn`
+- `location`
+- `document`
 
 Il vise a correler des signaux open source provenant de:
 

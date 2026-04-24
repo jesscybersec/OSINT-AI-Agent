@@ -12,12 +12,32 @@ from osint_agent.tools._common import slugify
 
 
 def build_parser() -> argparse.ArgumentParser:
+    target_types = [
+        "domain",
+        "subdomain",
+        "hostname",
+        "url",
+        "ip",
+        "cidr",
+        "asn",
+        "organization",
+        "company",
+        "email",
+        "username",
+        "alias",
+        "social_handle",
+        "profile_url",
+        "person_name",
+        "phone",
+        "location",
+        "document",
+    ]
     parser = argparse.ArgumentParser(description="Controlled OSINT pipeline runner.")
     parser.add_argument("target", help="Target value, for example example.com")
     parser.add_argument(
         "--target-type",
         default="domain",
-        choices=["domain", "subdomain", "ip", "organization", "company", "email", "username", "person_name", "phone"],
+        choices=target_types,
         help="Target type",
     )
     parser.add_argument(

@@ -89,7 +89,7 @@ def _max_coverage_pivots(target: Target) -> list[Observable]:
     query = target.value.replace(" ", "+")
     pivots: list[tuple[str, str]] = []
 
-    if target.type in {"username", "person_name"}:
+    if target.type in {"username", "alias", "social_handle", "person_name"}:
         for variant in username_variants(target.value)[:6]:
             pivots.append(("variant_search", f"https://www.google.com/search?q=%22{variant.replace(' ', '+')}%22"))
         pivots.extend(
@@ -99,7 +99,7 @@ def _max_coverage_pivots(target: Target) -> list[Observable]:
             ]
         )
 
-    if target.type in {"company", "organization", "domain"}:
+    if target.type in {"company", "organization", "domain", "subdomain", "hostname", "url", "ip", "cidr", "asn"}:
         pivots.extend(
             [
                 ("crtsh_lookup", f"https://crt.sh/?q={query}"),
@@ -116,6 +116,14 @@ def _max_coverage_pivots(target: Target) -> list[Observable]:
             ]
         )
 
+    if target.type in {"document", "url", "profile_url"}:
+        pivots.extend(
+            [
+                ("google_document_search", f"https://www.google.com/search?q=%22{query}%22"),
+                ("wayback_search", f"https://web.archive.org/web/*/{query}"),
+            ]
+        )
+
     return [
         Observable(type="search_url", value=url, source=source, confidence=0.5, tags=["profile-pivot", "max-coverage"])
         for source, url in pivots
@@ -129,7 +137,7 @@ def _canada_localization_pivots(target: Target) -> list[Observable]:
         ("openstreetmap_search", f"https://www.openstreetmap.org/search?query={query}%20Canada"),
     ]
 
-    if target.type in {"person_name", "phone"}:
+    if target.type in {"person_name", "phone", "location"}:
         pivots.extend(
             [
                 ("google_canada411", f"https://www.google.com/search?q=site%3Acanada411.ca+%22{query}%22"),
@@ -138,7 +146,7 @@ def _canada_localization_pivots(target: Target) -> list[Observable]:
             ]
         )
 
-    if target.type in {"company", "organization", "person_name"}:
+    if target.type in {"company", "organization", "person_name", "location"}:
         pivots.extend(
             [
                 ("google_opencanada", f"https://www.google.com/search?q=site%3Aopen.canada.ca+%22{query}%22"),

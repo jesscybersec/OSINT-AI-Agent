@@ -7,7 +7,7 @@ from osint_agent.settings import Settings
 
 
 def run(target: Target, settings: Settings) -> list[Observable]:
-    if target.type not in {"company", "organization", "person_name"}:
+    if target.type not in {"company", "organization", "person_name", "location"}:
         return []
 
     query = quote_plus(target.value)
