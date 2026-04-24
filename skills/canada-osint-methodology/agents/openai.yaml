@@ -1,0 +1,4 @@
+interface:
+  display_name: "Canada OSINT Methodology"
+  short_description: "Canada-focused OSINT and public-record workflow."
+  default_prompt: "Use $canada-osint-methodology to apply Canada-specific OSINT methodology and prioritize regional public sources and registries."

@@ -285,6 +285,7 @@ OSINT-AI-Agent/
 |-- docs/
 |   |-- en/
 |   `-- fr/
+|-- skills/
 |-- reports/
 |-- sample_reports/
 |-- scripts/
@@ -298,6 +299,9 @@ Key references:
 - [English Architecture](./docs/en/ARCHITECTURE.md)
 - [English Max Coverage Strategy](./docs/en/MAX_COVERAGE_STRATEGY.md)
 - [English Canada Localization](./docs/en/CANADA_LOCALIZATION.md)
+- [Domain OSINT Methodology Skill](./skills/domain-osint-methodology/SKILL.md)
+- [Email OSINT Methodology Skill](./skills/email-osint-methodology/SKILL.md)
+- [Canada OSINT Methodology Skill](./skills/canada-osint-methodology/SKILL.md)
 - [Public sample reports](./sample_reports/README.md)
 
 ---
