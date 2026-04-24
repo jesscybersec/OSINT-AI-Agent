@@ -24,6 +24,7 @@ def find_binary(name: str) -> str | None:
 
 
 def slugify(value: str) -> str:
+    value = value.replace("@", "_at_")
     slug = re.sub(r"[^A-Za-z0-9._-]+", "_", value.strip())
     return slug.strip("._") or "target"
 
