@@ -51,6 +51,17 @@ def run(target: Target, settings: Settings) -> list[Observable]:
     if not result.found:
         return []
 
+    if result.returncode == 124:
+        return [
+            Observable(
+                type="collector_status",
+                value=f"spiderfoot timed out after {settings.spiderfoot_timeout}s while querying '{query}'",
+                source="spiderfoot",
+                confidence=0.95,
+                tags=["collector-status", "timeout"],
+            )
+        ]
+
     if result.stdout:
         write_raw_output(settings.data_dir, "spiderfoot", target.value, "json", result.stdout)
     if result.stderr:

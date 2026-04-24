@@ -2,17 +2,29 @@ from __future__ import annotations
 
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
-from osint_agent.tools._common import DOMAIN_PATTERN, run_command, unique_strings, write_raw_output
+from osint_agent.tools._common import DOMAIN_PATTERN, derive_infra_query, run_command, unique_strings, write_raw_output
 
 
 def run(target: Target, settings: Settings) -> list[Observable]:
     if target.type not in {"domain", "subdomain", "organization", "company"}:
         return []
 
-    command = [settings.amass_binary, "enum", "-passive", "-norecursive", "-noalts", "-d", target.value]
+    query, _ = derive_infra_query(target.type, target.value)
+    command = [settings.amass_binary, "enum", "-passive", "-norecursive", "-noalts", "-d", query]
     result = run_command(command, timeout=settings.amass_timeout)
     if not result.found:
         return []
+
+    if result.returncode == 124:
+        return [
+            Observable(
+                type="collector_status",
+                value=f"amass timed out after {settings.amass_timeout}s while querying '{query}'",
+                source="amass",
+                confidence=0.95,
+                tags=["collector-status", "timeout"],
+            )
+        ]
 
     if result.stdout:
         write_raw_output(settings.data_dir, "amass", target.value, "txt", result.stdout)

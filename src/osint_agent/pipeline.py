@@ -6,18 +6,29 @@ from osint_agent.models import Finding, Observable, ReportData, Target
 from osint_agent.profiles import InvestigationProfile, get_profile, profile_reference_observables
 from osint_agent.settings import Settings
 from osint_agent.tools import amass, bbot, company_registry, identity, social, spiderfoot, theharvester
+from osint_agent.tools._common import derive_infra_query
 
 
 class Pipeline:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
+        self.collector_timeouts = {
+            "amass": self.settings.amass_timeout,
+            "bbot": self.settings.bbot_timeout,
+            "theHarvester": self.settings.theharvester_timeout,
+            "spiderfoot": self.settings.spiderfoot_timeout,
+            "social": self.settings.social_timeout,
+            "identity": self.settings.identity_timeout,
+        }
 
     def _progress(self, message: str) -> None:
         if self.settings.show_progress:
             print(message, flush=True)
 
     def _run_collector(self, label: str, runner, target: Target) -> list[Observable]:
-        self._progress(f"[+] Running {label} for {target.type}: {target.value}")
+        timeout = self.collector_timeouts.get(label)
+        timeout_note = f" (timeout: {timeout}s)" if timeout else ""
+        self._progress(f"[+] Running {label} for {target.type}: {target.value}{timeout_note}")
         observables = runner(target, self.settings)
         self._progress(f"[+] {label} completed with {len(observables)} observable(s)")
         return observables
@@ -34,6 +45,10 @@ class Pipeline:
         social_targets = {"username", "alias", "social_handle", "profile_url", "person_name", "organization", "company", "email", "location"}
         identity_targets = {"person_name", "email", "phone", "alias", "location", "document"}
         company_targets = {"company", "organization", "person_name", "location"}
+
+        normalized_infra_query, normalization_note = derive_infra_query(target.type, target.value)
+        if normalization_note is not None:
+            self._progress(f"[+] Infrastructure query normalized to '{normalized_infra_query}'")
 
         if (self.settings.enable_amass or "amass" in enabled) and target.type in domain_like_targets:
             observables.extend(self._run_collector("amass", amass.run, target))
@@ -135,6 +150,18 @@ class Pipeline:
                     severity="info",
                     source="pipeline",
                     confidence=0.86,
+                )
+            )
+
+        normalized_infra_query, normalization_note = derive_infra_query(target.type, target.value)
+        if normalization_note is not None:
+            findings.append(
+                Finding(
+                    title="Infrastructure query normalized",
+                    description=f"{normalization_note} The research query used for passive infrastructure collectors was '{normalized_infra_query}'.",
+                    severity="info",
+                    source="pipeline",
+                    confidence=0.93,
                 )
             )
 

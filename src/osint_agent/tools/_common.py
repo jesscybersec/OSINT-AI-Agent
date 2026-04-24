@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 @dataclass(slots=True)
@@ -26,6 +27,48 @@ def find_binary(name: str) -> str | None:
 def slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9@._-]+", "_", value.strip())
     return slug.strip("._") or "target"
+
+
+COMMON_WEB_PREFIXES = {"www", "www2", "ww2", "web", "m", "mobile"}
+
+
+def extract_host(value: str) -> str:
+    candidate = value.strip()
+    if not candidate:
+        return ""
+
+    if "://" in candidate:
+        parsed = urlparse(candidate)
+        return (parsed.hostname or "").strip().lower().rstrip(".")
+
+    candidate = candidate.split("/", 1)[0].strip().lower().rstrip(".")
+    if "@" in candidate and ":" in candidate:
+        candidate = candidate.rsplit("@", 1)[-1]
+    if ":" in candidate and candidate.count(":") == 1:
+        candidate = candidate.split(":", 1)[0]
+    return candidate
+
+
+def derive_infra_query(target_type: str, target_value: str) -> tuple[str, str | None]:
+    if target_type not in {"domain", "subdomain", "hostname", "url"}:
+        return target_value, None
+
+    host = extract_host(target_value)
+    if not host:
+        return target_value, None
+
+    labels = [label for label in host.split(".") if label]
+    if len(labels) >= 3 and labels[0] in COMMON_WEB_PREFIXES:
+        research_domain = ".".join(labels[1:])
+        return (
+            research_domain,
+            f"Infrastructure collectors normalized '{host}' to '{research_domain}' by dropping the common web prefix '{labels[0]}'.",
+        )
+
+    if host != target_value:
+        return host, f"Infrastructure collectors normalized the input value to host '{host}' before querying passive sources."
+
+    return host, None
 
 
 def run_command(command: list[str], timeout: int = 300) -> CommandResult:

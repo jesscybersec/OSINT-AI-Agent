@@ -25,6 +25,7 @@ DERIVED_TYPES = {
 }
 TOOL_RESULT_TYPES = {
     "breach_count",
+    "collector_status",
 }
 PIVOT_TYPES = {
     "search_url",
@@ -86,6 +87,10 @@ def _build_analyst_highlights(
             highlights.append(f"Breach-related enrichment returned count values: {count_values}.")
         else:
             highlights.append("h8mail did not report breach hits for this email in the current run.")
+
+    collector_statuses = [observable.value for observable in tool_results if observable.type == "collector_status"]
+    if collector_statuses:
+        highlights.append(f"Collector execution notes: {'; '.join(collector_statuses[:3])}.")
 
     social_hits = [observable for observable in evidence if observable.type in {"social_profile", "email_usage"}]
     if social_hits:

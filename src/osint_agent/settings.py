@@ -27,7 +27,7 @@ class Settings:
     enable_company_registry: bool = _get_bool("OSINT_AGENT_ENABLE_COMPANY_REGISTRY", True)
     amass_timeout: int = int(os.getenv("OSINT_AGENT_AMASS_TIMEOUT", "180"))
     bbot_timeout: int = int(os.getenv("OSINT_AGENT_BBOT_TIMEOUT", "240"))
-    theharvester_timeout: int = int(os.getenv("OSINT_AGENT_THEHARVESTER_TIMEOUT", "240"))
+    theharvester_timeout: int = int(os.getenv("OSINT_AGENT_THEHARVESTER_TIMEOUT", "90"))
     spiderfoot_timeout: int = int(os.getenv("OSINT_AGENT_SPIDERFOOT_TIMEOUT", "240"))
     social_timeout: int = int(os.getenv("OSINT_AGENT_SOCIAL_TIMEOUT", "180"))
     identity_timeout: int = int(os.getenv("OSINT_AGENT_IDENTITY_TIMEOUT", "180"))

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
-from osint_agent.tools._common import EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, run_command, write_raw_output
+from osint_agent.tools._common import EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, derive_infra_query, run_command, write_raw_output
 
 
 def _event_to_observable(event: dict) -> Observable | None:
@@ -33,12 +33,13 @@ def run(target: Target, settings: Settings) -> list[Observable]:
     if target.type not in {"domain", "subdomain", "ip", "organization", "company"}:
         return []
 
+    query, _ = derive_infra_query(target.type, target.value)
     output_dir = settings.data_dir / "raw" / "bbot"
     output_dir.mkdir(parents=True, exist_ok=True)
     command = [
         settings.bbot_binary,
         "-t",
-        target.value,
+        query,
         "-p",
         "subdomain-enum",
         "email-enum",
@@ -49,11 +50,22 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         "--output",
         str(output_dir),
         "--name",
-        target.value.replace("/", "_"),
+        query.replace("/", "_"),
     ]
     result = run_command(command, timeout=settings.bbot_timeout)
     if not result.found:
         return []
+
+    if result.returncode == 124:
+        return [
+            Observable(
+                type="collector_status",
+                value=f"bbot timed out after {settings.bbot_timeout}s while querying '{query}'",
+                source="bbot",
+                confidence=0.95,
+                tags=["collector-status", "timeout"],
+            )
+        ]
 
     if result.stdout:
         write_raw_output(settings.data_dir, "bbot", target.value, "ndjson", result.stdout)
