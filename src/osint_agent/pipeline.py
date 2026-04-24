@@ -12,9 +12,20 @@ class Pipeline:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
+    def _progress(self, message: str) -> None:
+        if self.settings.show_progress:
+            print(message, flush=True)
+
+    def _run_collector(self, label: str, runner, target: Target) -> list[Observable]:
+        self._progress(f"[+] Running {label} for {target.type}: {target.value}")
+        observables = runner(target, self.settings)
+        self._progress(f"[+] {label} completed with {len(observables)} observable(s)")
+        return observables
+
     def run(self, target: Target, profile_id: str = "default") -> ReportData:
         profile = get_profile(profile_id)
         observables: list[Observable] = []
+        self._progress(f"[+] Starting pipeline for target '{target.value}' ({target.type}) with profile '{profile.profile_id}'")
 
         enabled = set(profile.force_enable)
 
@@ -25,22 +36,25 @@ class Pipeline:
         company_targets = {"company", "organization", "person_name", "location"}
 
         if (self.settings.enable_amass or "amass" in enabled) and target.type in domain_like_targets:
-            observables.extend(amass.run(target, self.settings))
+            observables.extend(self._run_collector("amass", amass.run, target))
         if (self.settings.enable_bbot or "bbot" in enabled) and target.type in infrastructure_targets:
-            observables.extend(bbot.run(target, self.settings))
+            observables.extend(self._run_collector("bbot", bbot.run, target))
         if (self.settings.enable_theharvester or "theharvester" in enabled) and target.type in {"domain", "subdomain", "hostname", "organization", "company", "url"}:
-            observables.extend(theharvester.run(target, self.settings))
+            observables.extend(self._run_collector("theHarvester", theharvester.run, target))
         if (self.settings.enable_spiderfoot or "spiderfoot" in enabled) and target.type in infrastructure_targets | {"email", "username", "alias", "social_handle", "profile_url", "person_name", "phone", "location", "document"}:
-            observables.extend(spiderfoot.run(target, self.settings))
+            observables.extend(self._run_collector("spiderfoot", spiderfoot.run, target))
         if (self.settings.enable_social or "social" in enabled) and target.type in social_targets:
-            observables.extend(social.run(target, self.settings))
+            observables.extend(self._run_collector("social", social.run, target))
         if (self.settings.enable_identity or "identity" in enabled) and target.type in identity_targets:
-            observables.extend(identity.run(target, self.settings))
+            observables.extend(self._run_collector("identity", identity.run, target))
         if (self.settings.enable_company_registry or "company_registry" in enabled) and target.type in company_targets:
-            observables.extend(company_registry.run(target, self.settings))
-        observables.extend(profile_reference_observables(target, profile))
+            observables.extend(self._run_collector("company_registry", company_registry.run, target))
+        profile_observables = profile_reference_observables(target, profile)
+        observables.extend(profile_observables)
+        self._progress(f"[+] Added {len(profile_observables)} profile pivot/reference observable(s)")
 
         deduped = self._dedupe_observables(observables)
+        self._progress(f"[+] Pipeline finished with {len(deduped)} unique observable(s)")
         findings = self._build_findings(target, deduped, profile)
         return ReportData(
             target=target.value,

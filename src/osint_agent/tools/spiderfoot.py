@@ -47,7 +47,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         "json",
         "-H",
     ]
-    result = run_command(command, timeout=600)
+    result = run_command(command, timeout=settings.spiderfoot_timeout)
     if not result.found:
         return []
 

@@ -51,7 +51,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         "--name",
         target.value.replace("/", "_"),
     ]
-    result = run_command(command, timeout=600)
+    result = run_command(command, timeout=settings.bbot_timeout)
     if not result.found:
         return []
 

@@ -11,7 +11,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
 
     query = target.value if target.type != "email" else target.value.split("@", 1)[-1]
     command = [settings.theharvester_binary, "-d", query, "-b", "all", "-l", "200"]
-    result = run_command(command, timeout=600)
+    result = run_command(command, timeout=settings.theharvester_timeout)
     if not result.found:
         return []
 

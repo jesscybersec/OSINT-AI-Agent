@@ -10,7 +10,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         return []
 
     command = [settings.amass_binary, "enum", "-passive", "-norecursive", "-noalts", "-d", target.value]
-    result = run_command(command, timeout=300)
+    result = run_command(command, timeout=settings.amass_timeout)
     if not result.found:
         return []
 
