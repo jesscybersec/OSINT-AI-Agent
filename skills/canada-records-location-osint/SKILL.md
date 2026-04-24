@@ -1,5 +1,5 @@
 ---
-name: canada-osint-methodology
+name: canada-records-location-osint
 description: Apply Canada-focused OSINT methodology for people, companies, phone numbers, locations, and regional public records. Use when the investigation needs Canadian context, province-aware pivots, public-registry checks, Government of Canada references, legal references, or location-heavy reporting that distinguishes confirmed records from generic web hits.
 ---
 

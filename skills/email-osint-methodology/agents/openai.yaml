@@ -1,4 +1,0 @@
-interface:
-  display_name: "Email OSINT Methodology"
-  short_description: "Email OSINT with evidence-first reporting."
-  default_prompt: "Use $email-osint-methodology to investigate an email target with validation, breach checks, derived leads, and clean reporting."

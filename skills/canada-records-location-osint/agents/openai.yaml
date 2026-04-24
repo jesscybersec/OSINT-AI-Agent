@@ -1,0 +1,4 @@
+interface:
+  display_name: "Canada Records Location OSINT"
+  short_description: "Canada-focused OSINT and public-record workflow."
+  default_prompt: "Use $canada-records-location-osint to apply Canada-specific OSINT methodology and prioritize regional public sources and registries."

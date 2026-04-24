@@ -1,0 +1,4 @@
+interface:
+  display_name: "Passive Domain Infra OSINT"
+  short_description: "Passive domain and infra OSINT workflow."
+  default_prompt: "Use $passive-domain-infra-osint to structure passive domain OSINT, classify evidence, and produce a clear infrastructure investigation narrative."

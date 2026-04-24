@@ -1,5 +1,5 @@
 ---
-name: domain-osint-methodology
+name: passive-domain-infra-osint
 description: Structure passive domain and infrastructure OSINT for domains, subdomains, hostnames, URLs, IPs, CIDRs, and ASNs. Use when mapping attack surface, certificate exposure, passive web traces, repository mentions, or archived infrastructure history, and when results need to be classified into confirmed evidence, validation leads, and next pivots.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: email-osint-methodology
+name: evidence-first-email-osint
 description: Structure OSINT for email targets with validation, breach enrichment, account-reuse pivots, candidate username derivation, and evidence grading. Use when investigating an email address, checking public reuse, reviewing breach references, or producing a readable email-focused report with confirmed evidence, derived leads, and manual next steps.
 ---
 

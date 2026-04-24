@@ -1,4 +1,0 @@
-interface:
-  display_name: "Domain OSINT Methodology"
-  short_description: "Passive domain and infra OSINT workflow."
-  default_prompt: "Use $domain-osint-methodology to structure passive domain OSINT, classify evidence, and produce a clear infrastructure investigation narrative."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evidence-First Email OSINT"
+  short_description: "Email OSINT with evidence-first reporting."
+  default_prompt: "Use $evidence-first-email-osint to investigate an email target with validation, breach checks, derived leads, and clean reporting."
