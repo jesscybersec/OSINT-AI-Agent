@@ -132,8 +132,9 @@ def _document_search_urls(document_value: str) -> list[Observable]:
 
 def _email_search_urls(email_value: str) -> list[Observable]:
     query = quote_plus(email_value)
-    local_part = email_value.split("@", 1)[0]
-    variant_queries = username_variants(local_part)[:5]
+    has_at_symbol = "@" in email_value
+    local_part = email_value.split("@", 1)[0] if has_at_symbol else ""
+    variant_queries = username_variants(local_part)[:5] if local_part else []
 
     observables = [
         Observable(
@@ -145,10 +146,10 @@ def _email_search_urls(email_value: str) -> list[Observable]:
         ),
         Observable(
             type="search_url",
-            value=f"https://github.com/search?q={query}&type=commits",
-            source="github_email_search",
+            value=f"https://www.google.com/search?q=site%3Alinkedin.com+OR+site%3Ax.com+OR+site%3Areddit.com+%22{query}%22",
+            source="google_email_social",
             confidence=0.35,
-            tags=["email", "github"],
+            tags=["email", "social"],
         ),
     ]
 

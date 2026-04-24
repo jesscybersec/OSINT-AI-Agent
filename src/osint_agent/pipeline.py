@@ -91,6 +91,17 @@ class Pipeline:
                 )
             )
 
+        if target.type == "email" and "@" not in target.value:
+            findings.append(
+                Finding(
+                    title="Target value does not look like a valid email",
+                    description="The selected target type is 'email', but the provided value does not contain an '@' symbol. Email-specific pivots may be weak or misleading until the input is corrected.",
+                    severity="low",
+                    source="pipeline",
+                    confidence=0.95,
+                )
+            )
+
         if target.type in {"username", "alias", "social_handle", "profile_url", "email", "phone", "person_name", "location", "document"}:
             findings.append(
                 Finding(
