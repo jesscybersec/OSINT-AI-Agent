@@ -310,10 +310,10 @@ OSINT-AI-Agent/
 
 References cles:
 
-- [Apercu du projet en francais](./docs/fr/PROJECT_OVERVIEW.md)
-- [Architecture en francais](./docs/fr/ARCHITECTURE.md)
-- [Strategie Max Coverage en francais](./docs/fr/MAX_COVERAGE_STRATEGY.md)
-- [Localisation Canada en francais](./docs/fr/CANADA_LOCALIZATION.md)
+- [Apercu du projet](./docs/fr/PROJECT_OVERVIEW.md)
+- [Architecture](./docs/fr/ARCHITECTURE.md)
+- [Strategie Max Coverage](./docs/fr/MAX_COVERAGE_STRATEGY.md)
+- [Localisation Canada](./docs/fr/CANADA_LOCALIZATION.md)
 - [Modele operatoire de l'agent](./instructions/agent-operating-model.md)
 - [Standard de rapport](./instructions/reporting-standard.md)
 - [Skill OSINT Infra Domaine Passive](./skills/passive-domain-infra-osint/SKILL.md)
