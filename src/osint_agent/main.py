@@ -55,23 +55,26 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    args = build_parser().parse_args()
-    settings = Settings()
+    try:
+        args = build_parser().parse_args()
+        settings = Settings()
 
-    target = Target(
-        value=args.target,
-        type=args.target_type,
-        passive_only=not args.active,
-        tags=[args.profile],
-    )
+        target = Target(
+            value=args.target,
+            type=args.target_type,
+            passive_only=not args.active,
+            tags=[args.profile],
+        )
 
-    pipeline = Pipeline(settings)
-    report = pipeline.run(target, profile_id=args.profile)
+        pipeline = Pipeline(settings)
+        report = pipeline.run(target, profile_id=args.profile)
 
-    output_path = settings.output_dir / f"{slugify(target.value)}_{args.profile}.md"
-    render_markdown_report(report, Path("./templates"), output_path)
+        output_path = settings.output_dir / f"{slugify(target.value)}_{args.profile}.md"
+        render_markdown_report(report, Path("./templates"), output_path)
 
-    print(f"Report generated: {output_path}")
+        print(f"Report generated: {output_path}")
+    except KeyboardInterrupt:
+        print("Execution interrupted by user.")
 
 
 if __name__ == "__main__":

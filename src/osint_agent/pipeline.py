@@ -28,7 +28,7 @@ class Pipeline:
             observables.extend(amass.run(target, self.settings))
         if (self.settings.enable_bbot or "bbot" in enabled) and target.type in infrastructure_targets:
             observables.extend(bbot.run(target, self.settings))
-        if (self.settings.enable_theharvester or "theharvester" in enabled) and target.type in {"domain", "subdomain", "hostname", "organization", "company", "email", "url"}:
+        if (self.settings.enable_theharvester or "theharvester" in enabled) and target.type in {"domain", "subdomain", "hostname", "organization", "company", "url"}:
             observables.extend(theharvester.run(target, self.settings))
         if (self.settings.enable_spiderfoot or "spiderfoot" in enabled) and target.type in infrastructure_targets | {"email", "username", "alias", "social_handle", "profile_url", "person_name", "phone", "location", "document"}:
             observables.extend(spiderfoot.run(target, self.settings))

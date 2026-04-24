@@ -34,15 +34,26 @@ def run_command(command: list[str], timeout: int = 300) -> CommandResult:
         return CommandResult(command=command, returncode=127, stdout="", stderr="binary not found", found=False)
 
     resolved = [binary, *command[1:]]
-    completed = subprocess.run(
-        resolved,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            resolved,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode("utf-8", errors="replace")
+        stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode("utf-8", errors="replace")
+        return CommandResult(
+            command=resolved,
+            returncode=124,
+            stdout=stdout,
+            stderr=(stderr + "\ncommand timed out").strip(),
+            found=True,
+        )
     return CommandResult(
         command=resolved,
         returncode=completed.returncode,
