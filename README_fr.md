@@ -268,8 +268,7 @@ SpiderFoot et PhoneInfoga restent supportes comme ajouts optionnels.
 
 References de configuration:
 
-- [Guide Kali en anglais](./docs/en/KALI_SETUP.md)
-- [Guide Kali en francais](./docs/fr/KALI_SETUP.md)
+- [Guide Kali](./docs/fr/KALI_SETUP.md)
 - [Script d'installation Kali](./scripts/install_kali_tools.sh)
 
 ---
@@ -294,13 +293,9 @@ OSINT-AI-Agent/
 
 References cles:
 
-- [Apercu du projet en anglais](./docs/en/PROJECT_OVERVIEW.md)
 - [Apercu du projet en francais](./docs/fr/PROJECT_OVERVIEW.md)
-- [Architecture en anglais](./docs/en/ARCHITECTURE.md)
 - [Architecture en francais](./docs/fr/ARCHITECTURE.md)
-- [Strategie Max Coverage en anglais](./docs/en/MAX_COVERAGE_STRATEGY.md)
 - [Strategie Max Coverage en francais](./docs/fr/MAX_COVERAGE_STRATEGY.md)
-- [Localisation Canada en anglais](./docs/en/CANADA_LOCALIZATION.md)
 - [Localisation Canada en francais](./docs/fr/CANADA_LOCALIZATION.md)
 
 ---
