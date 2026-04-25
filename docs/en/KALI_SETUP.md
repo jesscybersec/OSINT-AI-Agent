@@ -85,6 +85,41 @@ ghunt --help
 python3 "$HOME/tools/spiderfoot/sf.py" --help
 ```
 
+## Collector Diagnostics
+
+If a domain report shows zero observables, do not assume the target has no exposure.
+First validate whether the collectors are actually working on your Kali host.
+
+### Recommended checks
+
+```bash
+amass enum -passive -d example.com
+bbot -t example.com -p subdomain-enum email-enum -rf passive -o /tmp/bbot-test -om json -n bbot-test
+theHarvester -d example.com -b all -l 50
+python3 "$HOME/tools/spiderfoot/sf.py" -h
+```
+
+### How to interpret common failures
+
+- `amass ... Permission denied` with `libpostal`
+  - this usually points to a local Amass or dependency installation problem
+  - do not default to running the whole agent with `sudo`
+- `flag provided but not defined`
+  - the wrapper is using an option not supported by your installed tool version
+- `bbot ... ambiguous option`
+  - the BBOT CLI flags do not match the installed version
+- `can't open file ... sf.py`
+  - SpiderFoot is not configured correctly and the script path is wrong
+- `binary not found`
+  - the collector is not installed or not reachable in `PATH`
+
+### Important note about sudo
+
+Do not run the main `python run.py ...` command with `sudo` by default.
+If a collector fails because of a missing file, a bad CLI flag, or a broken local install, `sudo` usually hides the real issue instead of fixing it.
+
+Use `sudo` only for package installation or explicit system-level setup steps such as `apt install`.
+
 ## Investigation Profiles
 
 The project currently supports these profiles:

@@ -250,6 +250,18 @@ theHarvester -h
 python run.py example.com --target-type domain --profile max_coverage
 ```
 
+Quick collector diagnostics:
+
+```bash
+amass enum -passive -d example.com
+bbot -t example.com -p subdomain-enum email-enum -rf passive -o /tmp/bbot-test -om json -n bbot-test
+theHarvester -d example.com -b all -l 50
+python3 "$HOME/tools/spiderfoot/sf.py" -h
+```
+
+Do not run the main `python run.py ...` command with `sudo` by default.
+Most collector failures are better fixed through installation, configuration, or wrapper compatibility.
+
 Recommended install baseline:
 
 ```bash
