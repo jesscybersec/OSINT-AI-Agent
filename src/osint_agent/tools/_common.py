@@ -9,6 +9,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
+ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+
+
 @dataclass(slots=True)
 class CommandResult:
     command: list[str]
@@ -27,6 +30,37 @@ def find_binary(name: str) -> str | None:
 def slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9@._-]+", "_", value.strip())
     return slug.strip("._") or "target"
+
+
+def strip_ansi(value: str) -> str:
+    return ANSI_ESCAPE_RE.sub("", value)
+
+
+def summarize_command_failure(stderr: str, stdout: str, returncode: int) -> str:
+    combined = strip_ansi("\n".join(part for part in [stderr, stdout] if part)).replace("\r", "\n")
+    lines = [line.strip() for line in combined.splitlines() if line.strip()]
+    if not lines:
+        return f"return code {returncode}"
+
+    keywords = [
+        "permission denied",
+        "flag provided but not defined",
+        "ambiguous option",
+        "can't open file",
+        "error:",
+        "err",
+        "usage:",
+        "binary not found",
+        "command timed out",
+    ]
+    interesting = [
+        line
+        for line in lines
+        if any(keyword in line.lower() for keyword in keywords)
+    ]
+    selected = interesting[:4] if interesting else lines[:4]
+    summary = " | ".join(selected)
+    return summary[:600]
 
 
 COMMON_WEB_PREFIXES = {"www", "www2", "ww2", "web", "m", "mobile"}

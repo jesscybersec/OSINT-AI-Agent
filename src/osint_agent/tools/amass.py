@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
-from osint_agent.tools._common import DOMAIN_PATTERN, derive_infra_query, run_command, unique_strings, write_raw_output
+from osint_agent.tools._common import DOMAIN_PATTERN, derive_infra_query, run_command, summarize_command_failure, unique_strings, write_raw_output
 
 
 def run(target: Target, settings: Settings) -> list[Observable]:
@@ -10,7 +10,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         return []
 
     query, _ = derive_infra_query(target.type, target.value)
-    command = [settings.amass_binary, "enum", "-passive", "-norecursive", "-noalts", "-d", query]
+    command = [settings.amass_binary, "enum", "-passive", "-norecursive", "-d", query]
     result = run_command(command, timeout=settings.amass_timeout)
     if not result.found:
         return [
@@ -40,7 +40,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         write_raw_output(settings.data_dir, "amass", f"{target.value}_stderr", "log", result.stderr)
 
     if result.returncode != 0:
-        detail = result.stderr.strip() or f"return code {result.returncode}"
+        detail = summarize_command_failure(result.stderr, result.stdout, result.returncode)
         return [
             Observable(
                 type="collector_status",

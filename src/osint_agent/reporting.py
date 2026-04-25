@@ -289,6 +289,7 @@ def _status_label(status: str) -> str:
         "timeout": "Timed out",
         "missing": "Missing",
         "skipped": "Skipped",
+        "error": "Error",
     }.get(status, status.title())
 
 

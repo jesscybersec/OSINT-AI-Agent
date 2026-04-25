@@ -45,6 +45,7 @@ class Pipeline:
             status = "timeout"
             note = next(value for value in collector_statuses if "timed out" in value)
         elif collector_statuses:
+            status = "error"
             note = "; ".join(collector_statuses[:2])
         elif not observables:
             note = "No observable output returned for the current query."

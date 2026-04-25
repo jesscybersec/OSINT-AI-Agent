@@ -4,7 +4,7 @@ import json
 
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
-from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, derive_infra_query, run_command, unique_strings, write_raw_output
+from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, derive_infra_query, run_command, summarize_command_failure, unique_strings, write_raw_output
 
 
 def _spiderfoot_event_to_observable(item: dict) -> Observable | None:
@@ -77,7 +77,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         write_raw_output(settings.data_dir, "spiderfoot", f"{target.value}_stderr", "log", result.stderr)
 
     if result.returncode != 0:
-        detail = result.stderr.strip() or f"return code {result.returncode}"
+        detail = summarize_command_failure(result.stderr, result.stdout, result.returncode)
         return [
             Observable(
                 type="collector_status",
