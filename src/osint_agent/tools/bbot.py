@@ -80,6 +80,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         settings.bbot_binary,
         "-t",
         query,
+        "-y",
         "-p",
         "subdomain-enum",
         "email-enum",
@@ -92,6 +93,8 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         "--name",
         query.replace("/", "_"),
     ]
+    if settings.bbot_no_deps:
+        command.append("--no-deps")
     result = run_command(command, timeout=settings.bbot_timeout)
     if not result.found:
         return [

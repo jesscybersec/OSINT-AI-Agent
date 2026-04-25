@@ -12,6 +12,13 @@ def _get_bool(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _get_str(name: str, default: str) -> str:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip() or default
+
+
 @dataclass(slots=True)
 class Settings:
     output_dir: Path = Path(os.getenv("OSINT_AGENT_OUTPUT_DIR", "./reports"))
@@ -27,10 +34,15 @@ class Settings:
     enable_company_registry: bool = _get_bool("OSINT_AGENT_ENABLE_COMPANY_REGISTRY", True)
     amass_timeout: int = int(os.getenv("OSINT_AGENT_AMASS_TIMEOUT", "180"))
     bbot_timeout: int = int(os.getenv("OSINT_AGENT_BBOT_TIMEOUT", "240"))
-    theharvester_timeout: int = int(os.getenv("OSINT_AGENT_THEHARVESTER_TIMEOUT", "90"))
+    theharvester_timeout: int = int(os.getenv("OSINT_AGENT_THEHARVESTER_TIMEOUT", "240"))
     spiderfoot_timeout: int = int(os.getenv("OSINT_AGENT_SPIDERFOOT_TIMEOUT", "240"))
     social_timeout: int = int(os.getenv("OSINT_AGENT_SOCIAL_TIMEOUT", "180"))
     identity_timeout: int = int(os.getenv("OSINT_AGENT_IDENTITY_TIMEOUT", "180"))
+    bbot_no_deps: bool = _get_bool("OSINT_AGENT_BBOT_NO_DEPS", True)
+    theharvester_sources: str = _get_str(
+        "OSINT_AGENT_THEHARVESTER_SOURCES",
+        "anubis,baidu,certspotter,crtsh,duckduckgo,hackertarget,hudsonrock,otx,rapiddns,subdomaincenter,urlscan,wayback",
+    )
     socialscan_binary: str = os.getenv("OSINT_AGENT_SOCIALSCAN_BINARY", "socialscan")
     maigret_binary: str = os.getenv("OSINT_AGENT_MAIGRET_BINARY", "maigret")
     phoneinfoga_binary: str = os.getenv("OSINT_AGENT_PHONEINFOGA_BINARY", "phoneinfoga")

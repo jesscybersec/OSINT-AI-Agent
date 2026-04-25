@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+from pathlib import Path
+
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
 from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, derive_infra_query, run_command, summarize_command_failure, unique_strings, write_raw_output
@@ -37,9 +39,14 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         return []
 
     query = target.value if target.type in {"email", "username", "person_name", "phone", "organization", "company"} else derive_infra_query(target.type, target.value)[0]
+    script_path = settings.spiderfoot_script
+    if script_path == "sf.py":
+        default_home_path = Path.home() / "tools" / "spiderfoot" / "sf.py"
+        if default_home_path.exists():
+            script_path = str(default_home_path)
     command = [
         settings.spiderfoot_python,
-        settings.spiderfoot_script,
+        script_path,
         "-s",
         query,
         "-u",
@@ -53,7 +60,7 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         return [
             Observable(
                 type="collector_status",
-                value=f"spiderfoot runtime not found: {settings.spiderfoot_python} {settings.spiderfoot_script}",
+                value=f"spiderfoot runtime not found: {settings.spiderfoot_python} {script_path}",
                 source="spiderfoot",
                 confidence=0.98,
                 tags=["collector-status", "missing-runtime"],
