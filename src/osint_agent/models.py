@@ -72,6 +72,8 @@ class ReportData:
     mode: str
     target_type: TargetType = "domain"
     profile: str = "default"
+    active_instructions: list[str] = field(default_factory=list)
+    active_skills: list[str] = field(default_factory=list)
     generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     findings: list[Finding] = field(default_factory=list)
     observables: list[Observable] = field(default_factory=list)

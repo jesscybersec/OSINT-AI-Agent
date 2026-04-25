@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
+from osint_agent.methodology import select_active_instructions, select_active_skills
 from osint_agent.models import CollectorRun, Finding, Observable, ReportData, Target
 from osint_agent.profiles import InvestigationProfile, get_profile, profile_reference_observables
 from osint_agent.settings import Settings
@@ -58,7 +59,13 @@ class Pipeline:
         profile = get_profile(profile_id)
         observables: list[Observable] = []
         collector_runs: list[CollectorRun] = []
+        active_instructions = select_active_instructions(target, profile.profile_id)
+        active_skills = select_active_skills(target, profile.profile_id)
         self._progress(f"[+] Starting pipeline for target '{target.value}' ({target.type}) with profile '{profile.profile_id}'")
+        if active_instructions:
+            self._progress(f"[+] Active instructions: {', '.join(active_instructions)}")
+        if active_skills:
+            self._progress(f"[+] Active skills: {', '.join(active_skills)}")
 
         enabled = set(profile.force_enable)
 
@@ -112,6 +119,8 @@ class Pipeline:
             target_type=target.type,
             mode="passive" if target.passive_only else self.settings.default_mode,
             profile=profile.profile_id,
+            active_instructions=active_instructions,
+            active_skills=active_skills,
             findings=findings,
             observables=deduped,
             collector_runs=collector_runs,

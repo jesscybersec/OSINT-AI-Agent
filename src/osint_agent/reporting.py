@@ -293,7 +293,7 @@ def _status_label(status: str) -> str:
 
 
 def _build_scope_lines(report: ReportData) -> list[str]:
-    return [
+    lines = [
         "## Scope",
         "",
         f"- Investigation target: `{report.target}`",
@@ -307,6 +307,16 @@ def _build_scope_lines(report: ReportData) -> list[str]:
         "It is meant to show what was searched, what returned evidence, what failed, and what should be reviewed next.",
         "",
     ]
+
+    if report.active_instructions or report.active_skills:
+        lines.extend(["Methodology context:", ""])
+        for instruction in report.active_instructions:
+            lines.append(f"- Instruction file: `{instruction}`")
+        for skill in report.active_skills:
+            lines.append(f"- Skill: `{skill}`")
+        lines.append("")
+
+    return lines
 
 
 def _render_collector_summary(collector_runs: list[CollectorRun]) -> list[str]:
