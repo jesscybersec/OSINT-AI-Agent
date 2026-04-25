@@ -40,9 +40,12 @@ class Pipeline:
         self._progress(f"[+] {label} completed with {len(observables)} observable(s)")
         status = "completed"
         note = None
-        if any(observable.type == "collector_status" and "timed out" in observable.value for observable in observables):
+        collector_statuses = [observable.value for observable in observables if observable.type == "collector_status"]
+        if any("timed out" in value for value in collector_statuses):
             status = "timeout"
-            note = next(observable.value for observable in observables if observable.type == "collector_status")
+            note = next(value for value in collector_statuses if "timed out" in value)
+        elif collector_statuses:
+            note = "; ".join(collector_statuses[:2])
         elif not observables:
             note = "No observable output returned for the current query."
 

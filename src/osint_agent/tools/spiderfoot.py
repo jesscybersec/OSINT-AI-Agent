@@ -4,7 +4,7 @@ import json
 
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
-from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, run_command, unique_strings, write_raw_output
+from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, URL_PATTERN, derive_infra_query, run_command, unique_strings, write_raw_output
 
 
 def _spiderfoot_event_to_observable(item: dict) -> Observable | None:
@@ -32,15 +32,16 @@ def _spiderfoot_event_to_observable(item: dict) -> Observable | None:
 
 
 def run(target: Target, settings: Settings) -> list[Observable]:
-    supported_types = {"domain", "organization", "company", "email", "username", "person_name", "phone"}
+    supported_types = {"domain", "subdomain", "hostname", "url", "organization", "company", "email", "username", "person_name", "phone"}
     if target.type not in supported_types:
         return []
 
+    query = target.value if target.type in {"email", "username", "person_name", "phone", "organization", "company"} else derive_infra_query(target.type, target.value)[0]
     command = [
         settings.spiderfoot_python,
         settings.spiderfoot_script,
         "-s",
-        target.value,
+        query,
         "-u",
         "passive",
         "-o",
@@ -49,7 +50,15 @@ def run(target: Target, settings: Settings) -> list[Observable]:
     ]
     result = run_command(command, timeout=settings.spiderfoot_timeout)
     if not result.found:
-        return []
+        return [
+            Observable(
+                type="collector_status",
+                value=f"spiderfoot runtime not found: {settings.spiderfoot_python} {settings.spiderfoot_script}",
+                source="spiderfoot",
+                confidence=0.98,
+                tags=["collector-status", "missing-runtime"],
+            )
+        ]
 
     if result.returncode == 124:
         return [
@@ -66,6 +75,18 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         write_raw_output(settings.data_dir, "spiderfoot", target.value, "json", result.stdout)
     if result.stderr:
         write_raw_output(settings.data_dir, "spiderfoot", f"{target.value}_stderr", "log", result.stderr)
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or f"return code {result.returncode}"
+        return [
+            Observable(
+                type="collector_status",
+                value=f"spiderfoot exited with {detail} while querying '{query}'",
+                source="spiderfoot",
+                confidence=0.9,
+                tags=["collector-status", "error"],
+            )
+        ]
 
     observables: list[Observable] = []
     try:

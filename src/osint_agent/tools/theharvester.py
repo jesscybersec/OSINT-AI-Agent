@@ -13,7 +13,15 @@ def run(target: Target, settings: Settings) -> list[Observable]:
     command = [settings.theharvester_binary, "-d", query, "-b", "all", "-l", "200"]
     result = run_command(command, timeout=settings.theharvester_timeout)
     if not result.found:
-        return []
+        return [
+            Observable(
+                type="collector_status",
+                value=f"theHarvester binary not found: {settings.theharvester_binary}",
+                source="theHarvester",
+                confidence=0.98,
+                tags=["collector-status", "missing-binary"],
+            )
+        ]
 
     if result.returncode == 124:
         return [
@@ -30,6 +38,18 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         write_raw_output(settings.data_dir, "theharvester", target.value, "txt", result.stdout)
     if result.stderr:
         write_raw_output(settings.data_dir, "theharvester", f"{target.value}_stderr", "log", result.stderr)
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or f"return code {result.returncode}"
+        return [
+            Observable(
+                type="collector_status",
+                value=f"theHarvester exited with {detail} while querying '{query}'",
+                source="theHarvester",
+                confidence=0.9,
+                tags=["collector-status", "error"],
+            )
+        ]
 
     observables: list[Observable] = []
     for match in unique_strings(EMAIL_PATTERN.findall(result.stdout)):

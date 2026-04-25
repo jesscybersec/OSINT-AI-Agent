@@ -13,7 +13,15 @@ def run(target: Target, settings: Settings) -> list[Observable]:
     command = [settings.amass_binary, "enum", "-passive", "-norecursive", "-noalts", "-d", query]
     result = run_command(command, timeout=settings.amass_timeout)
     if not result.found:
-        return []
+        return [
+            Observable(
+                type="collector_status",
+                value=f"amass binary not found: {settings.amass_binary}",
+                source="amass",
+                confidence=0.98,
+                tags=["collector-status", "missing-binary"],
+            )
+        ]
 
     if result.returncode == 124:
         return [
@@ -30,6 +38,18 @@ def run(target: Target, settings: Settings) -> list[Observable]:
         write_raw_output(settings.data_dir, "amass", target.value, "txt", result.stdout)
     if result.stderr:
         write_raw_output(settings.data_dir, "amass", f"{target.value}_stderr", "log", result.stderr)
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or f"return code {result.returncode}"
+        return [
+            Observable(
+                type="collector_status",
+                value=f"amass exited with {detail} while querying '{query}'",
+                source="amass",
+                confidence=0.9,
+                tags=["collector-status", "error"],
+            )
+        ]
 
     matches = unique_strings(DOMAIN_PATTERN.findall(result.stdout))
     return [
