@@ -27,6 +27,12 @@ else
   echo "[*] SpiderFoot directory already exists: ${SPIDERFOOT_DIR}"
 fi
 
+if [ -d "${SPIDERFOOT_DIR}" ]; then
+  echo "[*] Installing SpiderFoot Python dependencies..."
+  python3 -m pip install --break-system-packages -r "${SPIDERFOOT_DIR}/requirements.txt" || true
+  python3 -m pip install --break-system-packages PyPDF2 || true
+fi
+
 cat <<'EOF'
 
 [*] Installed or prepared
@@ -49,7 +55,7 @@ theHarvester:
 
 SpiderFoot:
   Source was cloned to ~/tools/spiderfoot if the directory did not already exist.
-  Install its Python dependencies manually inside that directory if needed.
+  Python dependencies and PyPDF2 were installed if possible.
 
 Curated source hubs to integrate into your workflow:
   https://github.com/jivoi/awesome-osint

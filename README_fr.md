@@ -278,6 +278,8 @@ pipx install bbot
 
 SpiderFoot et PhoneInfoga restent supportes comme ajouts optionnels.
 
+L'installateur Kali tente maintenant aussi d'installer les dependances Python de SpiderFoot, y compris `PyPDF2`.
+
 References de configuration:
 
 - [Guide Kali](./docs/fr/KALI_SETUP.md)

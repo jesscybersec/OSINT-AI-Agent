@@ -55,8 +55,11 @@ mkdir -p ~/tools
 git clone https://github.com/smicallef/spiderfoot.git ~/tools/spiderfoot
 cd ~/tools/spiderfoot
 pip3 install -r requirements.txt
+pip3 install PyPDF2
 python3 ./sf.py --help
 ```
+
+Si tu utilises l'installateur du projet, il tente maintenant aussi d'installer automatiquement les dependances SpiderFoot et `PyPDF2`.
 
 ## Variables d'environnement attendues par l'agent
 
@@ -110,6 +113,8 @@ python3 "$HOME/tools/spiderfoot/sf.py" -h
   - les flags BBOT du wrapper ne correspondent pas a la version presente sur ta Kali
 - `can't open file ... sf.py`
   - SpiderFoot n'est pas configure correctement et le chemin du script est mauvais
+- `ModuleNotFoundError: No module named 'PyPDF2'`
+  - les dependances SpiderFoot ne sont pas completement installees sur la Kali locale
 - `binary not found`
   - le collecteur n'est pas installe ou pas accessible dans le `PATH`
 
