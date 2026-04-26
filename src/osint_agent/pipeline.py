@@ -140,16 +140,6 @@ class Pipeline:
     def _build_findings(self, target: Target, observables: list[Observable], profile: InvestigationProfile) -> list[Finding]:
         findings: list[Finding] = []
 
-        findings.append(
-            Finding(
-                title="Investigation profile selected",
-                description=f"Profile '{profile.profile_id}' is active. {profile.description}",
-                severity="info",
-                source="profile",
-                confidence=0.95,
-            )
-        )
-
         if observables:
             findings.append(
                 Finding(
@@ -201,18 +191,6 @@ class Pipeline:
                     severity="info",
                     source="pipeline",
                     confidence=0.86,
-                )
-            )
-
-        normalized_infra_query, normalization_note = derive_infra_query(target.type, target.value)
-        if normalization_note is not None:
-            findings.append(
-                Finding(
-                    title="Infrastructure query normalized",
-                    description=f"{normalization_note} The research query used for passive infrastructure collectors was '{normalized_infra_query}'.",
-                    severity="info",
-                    source="pipeline",
-                    confidence=0.93,
                 )
             )
 

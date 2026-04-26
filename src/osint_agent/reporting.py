@@ -104,6 +104,7 @@ def _build_key_findings(
         findings.append(f"Derived candidate usernames: {', '.join(candidate_usernames[:5])}.")
 
     successful_collectors = [run for run in collector_runs if run.status == "completed" and run.observable_count > 0]
+    error_collectors = [run for run in collector_runs if run.status == "error"]
     timeout_collectors = [run for run in collector_runs if run.status == "timeout"]
     if successful_collectors:
         findings.append(
@@ -111,6 +112,17 @@ def _build_key_findings(
             + ", ".join(f"{run.collector} ({run.observable_count})" for run in successful_collectors[:5])
             + "."
         )
+
+    if report.target_type in INFRA_TARGET_TYPES:
+        subdomains = sorted({observable.value for observable in evidence if observable.type == "domain" and observable.value != report.target})
+        ips = sorted({observable.value for observable in evidence if observable.type == "ip"})
+        if subdomains:
+            findings.append(f"Confirmed infrastructure expansion: {len(subdomains)} related hostnames or domains identified.")
+        if ips:
+            findings.append(f"Confirmed network indicators: {len(ips)} IP address(es) observed.")
+
+    if error_collectors:
+        findings.append("Collector errors reduced coverage: " + ", ".join(run.collector for run in error_collectors) + ".")
 
     if timeout_collectors:
         findings.append("Collector timeouts affected coverage: " + ", ".join(run.collector for run in timeout_collectors) + ".")
@@ -141,6 +153,35 @@ def _render_finding_lines(findings: list[Finding]) -> list[str]:
             )
     else:
         lines.extend(["No workflow findings were recorded.", ""])
+    return lines
+
+
+def _render_analyst_findings(report: ReportData, evidence: list[Observable], collector_runs: list[CollectorRun]) -> list[str]:
+    lines = ["## What Matters", ""]
+    points: list[str] = []
+
+    if report.target_type in INFRA_TARGET_TYPES:
+        discovered_domains = sorted({observable.value for observable in evidence if observable.type == "domain"})
+        related_domains = [value for value in discovered_domains if value != report.target]
+        discovered_ips = sorted({observable.value for observable in evidence if observable.type == "ip"})
+
+        if related_domains:
+            preview = ", ".join(related_domains[:6])
+            points.append(f"Related hostnames and domains were identified, including: {preview}.")
+        if discovered_ips:
+            preview = ", ".join(discovered_ips[:6])
+            points.append(f"Observed IP infrastructure includes: {preview}.")
+
+    if not points:
+        successful_collectors = [run for run in collector_runs if run.status == "completed" and run.observable_count > 0]
+        if successful_collectors:
+            points.append("The run produced usable collector output, but it still requires manual review and correlation before drawing conclusions.")
+        else:
+            points.append("No strong analyst-level finding could be derived automatically from this run.")
+
+    for point in points:
+        lines.append(f"- {point}")
+    lines.append("")
     return lines
 
 
@@ -328,9 +369,23 @@ def _render_collector_summary(collector_runs: list[CollectorRun]) -> list[str]:
 
     lines.extend(["| Collector | Query Used | Status | Results | Note |", "|---|---|---|---:|---|"])
     for run in collector_runs:
+        note = (run.note or "").replace("\n", " ")
         lines.append(
-            f"| `{run.collector}` | `{run.query}` | {_status_label(run.status)} | {run.observable_count} | {run.note or ''} |"
+            f"| `{run.collector}` | `{run.query}` | {_status_label(run.status)} | {run.observable_count} | {note} |"
         )
+    lines.append("")
+    return lines
+
+
+def _render_collector_issues(collector_runs: list[CollectorRun]) -> list[str]:
+    lines = ["## Collector Issues", ""]
+    issues = [run for run in collector_runs if run.status in {"error", "timeout", "missing"} and run.note]
+    if not issues:
+        lines.extend(["No collector issues recorded.", ""])
+        return lines
+
+    for run in issues:
+        lines.append(f"- `{run.collector}`: {run.note}")
     lines.append("")
     return lines
 
@@ -382,12 +437,13 @@ def render_markdown_report(report: ReportData, template_dir: Path, output_path: 
     lines.append("")
 
     lines.extend(_build_scope_lines(report))
-    lines.extend(["## Analytical Findings", ""])
-    lines.extend(_render_finding_lines(report.findings))
+    lines.extend(_render_analyst_findings(report, evidence, report.collector_runs))
+    lines.extend(_render_collector_issues(report.collector_runs))
 
     lines.extend(_render_collector_summary(report.collector_runs))
     lines.extend(_render_observable_table("## Confirmed Evidence", evidence))
-    lines.extend(_render_observable_table("## Collector Notes", tool_results))
+    if tool_results:
+        lines.extend(_render_observable_table("## Collector Notes", tool_results))
     lines.extend(_render_observable_table("## Leads Requiring Validation", derived))
     if report.target_type in INFRA_TARGET_TYPES:
         lines.extend(_render_domain_asset_summary(evidence + other))
