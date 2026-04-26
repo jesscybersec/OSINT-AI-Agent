@@ -60,7 +60,7 @@ class Finding:
 class CollectorRun:
     collector: str
     query: str
-    status: Literal["completed", "timeout", "missing", "skipped", "error"]
+    status: Literal["completed", "partial", "timeout", "missing", "skipped", "error"]
     observable_count: int = 0
     timeout_seconds: int | None = None
     note: str | None = None

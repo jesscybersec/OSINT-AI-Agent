@@ -4,7 +4,7 @@ import re
 
 from osint_agent.models import Observable, Target
 from osint_agent.settings import Settings
-from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, derive_infra_query, run_command, summarize_command_failure, unique_strings, write_raw_output
+from osint_agent.tools._common import DOMAIN_PATTERN, EMAIL_PATTERN, IPV4_PATTERN, derive_infra_query, run_command, summarize_command_failure, summarize_tool_warning, unique_strings, write_raw_output
 
 
 SECTION_HEADER_RE = re.compile(r"^\[\*\]\s+(.+?):?\s*$")
@@ -91,6 +91,28 @@ def run(target: Target, settings: Settings) -> list[Observable]:
     if result.stderr:
         write_raw_output(settings.data_dir, "theharvester", f"{target.value}_stderr", "log", result.stderr)
 
+    observables: list[Observable] = []
+    for match in unique_strings(EMAIL_PATTERN.findall(result.stdout)):
+        observables.append(Observable(type="email", value=match, source="theHarvester", confidence=0.8, tags=["theharvester", "email-enum"]))
+    for match in unique_strings(IPV4_PATTERN.findall(result.stdout)):
+        observables.append(Observable(type="ip", value=match, source="theHarvester", confidence=0.76, tags=["theharvester", "host-enum"]))
+    for match in unique_strings(DOMAIN_PATTERN.findall(result.stdout)):
+        observables.append(Observable(type="domain", value=match, source="theHarvester", confidence=0.75, tags=["theharvester", "domain-enum"]))
+    observables.extend(_parse_theharvester_sections(result.stdout))
+
+    if observables and result.returncode != 0:
+        warning = summarize_tool_warning(result.stderr, result.stdout, result.returncode)
+        observables.append(
+            Observable(
+                type="collector_status",
+                value=f"theHarvester returned results with warnings: {warning}",
+                source="theHarvester",
+                confidence=0.7,
+                tags=["collector-status", "warning"],
+            )
+        )
+        return observables
+
     if result.returncode != 0:
         detail = summarize_command_failure(result.stderr, result.stdout, result.returncode)
         return [
@@ -102,13 +124,4 @@ def run(target: Target, settings: Settings) -> list[Observable]:
                 tags=["collector-status", "error"],
             )
         ]
-
-    observables: list[Observable] = []
-    for match in unique_strings(EMAIL_PATTERN.findall(result.stdout)):
-        observables.append(Observable(type="email", value=match, source="theHarvester", confidence=0.8, tags=["theharvester", "email-enum"]))
-    for match in unique_strings(IPV4_PATTERN.findall(result.stdout)):
-        observables.append(Observable(type="ip", value=match, source="theHarvester", confidence=0.76, tags=["theharvester", "host-enum"]))
-    for match in unique_strings(DOMAIN_PATTERN.findall(result.stdout)):
-        observables.append(Observable(type="domain", value=match, source="theHarvester", confidence=0.75, tags=["theharvester", "domain-enum"]))
-    observables.extend(_parse_theharvester_sections(result.stdout))
     return observables

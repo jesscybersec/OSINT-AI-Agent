@@ -104,12 +104,19 @@ def _build_key_findings(
         findings.append(f"Derived candidate usernames: {', '.join(candidate_usernames[:5])}.")
 
     successful_collectors = [run for run in collector_runs if run.status == "completed" and run.observable_count > 0]
+    partial_collectors = [run for run in collector_runs if run.status == "partial" and run.observable_count > 0]
     error_collectors = [run for run in collector_runs if run.status == "error"]
     timeout_collectors = [run for run in collector_runs if run.status == "timeout"]
     if successful_collectors:
         findings.append(
             "Collectors with usable output: "
             + ", ".join(f"{run.collector} ({run.observable_count})" for run in successful_collectors[:5])
+            + "."
+        )
+    if partial_collectors:
+        findings.append(
+            "Collectors with usable output but warnings: "
+            + ", ".join(f"{run.collector} ({run.observable_count})" for run in partial_collectors[:5])
             + "."
         )
 
@@ -327,6 +334,7 @@ def _render_domain_pivot_sections(pivots: list[Observable]) -> list[str]:
 def _status_label(status: str) -> str:
     return {
         "completed": "Completed",
+        "partial": "Completed with warnings",
         "timeout": "Timed out",
         "missing": "Missing",
         "skipped": "Skipped",

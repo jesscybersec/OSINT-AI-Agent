@@ -63,6 +63,30 @@ def summarize_command_failure(stderr: str, stdout: str, returncode: int) -> str:
     return summary[:600]
 
 
+def summarize_tool_warning(stderr: str, stdout: str, returncode: int) -> str:
+    combined = strip_ansi("\n".join(part for part in [stderr, stdout] if part)).replace("\r", "\n")
+    lines = [line.strip() for line in combined.splitlines() if line.strip()]
+    if not lines:
+        return f"return code {returncode}"
+
+    keywords = [
+        "missing api key",
+        "bad credentials",
+        "invalid credentials",
+        "api unavailable",
+        "module not found",
+        "permission denied",
+        "can't open file",
+        "error parsing results",
+        "error connecting",
+        "timed out",
+    ]
+    interesting = [line for line in lines if any(keyword in line.lower() for keyword in keywords)]
+    selected = interesting[:3] if interesting else lines[:2]
+    summary = " | ".join(selected)
+    return summary[:400]
+
+
 COMMON_WEB_PREFIXES = {"www", "www2", "ww2", "web", "m", "mobile"}
 
 
